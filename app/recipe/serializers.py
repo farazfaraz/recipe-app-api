@@ -25,10 +25,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'time_minutes', 'price', 'link', 'tags']
         read_only_fields = ['id'] # meaning it cannot be changed by users.
 
-    def create(self, validated_data):
-        """Create a recipe."""
-        tags = validated_data.pop('tags', []) # Extract tags from request data
-        recipe = Recipe.objects.create(**validated_data) # Create the recipe
+    def _get_or_create_tag(self, tags, recipe):
+        """Handle getting or creating tags as needed."""
         auth_user = self.context['request'].user # Get the authenticated user
 
         for tag in tags:
@@ -38,7 +36,24 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
             recipe.tags.add(tag_obj) # Add the tag to the recipe
 
+    def create(self, validated_data):
+        """Create a recipe."""
+        tags = validated_data.pop('tags', []) # Extract tags from request data
+        recipe = Recipe.objects.create(**validated_data) # Create the recipe
+        self._get_or_create_tag(tags, recipe)
+
+
         return recipe
+    def update(self, instance, validated_data):
+        """Update recipe."""
+        tags = validated_data.pop('tags', None)
+        if tags is not None:
+            instance.tags.clear()
+            self._get_or_create_tag(tags, instance)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 class RecipeDetailSerializer(RecipeSerializer):
     """Serializer for recipe detail view."""

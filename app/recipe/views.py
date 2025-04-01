@@ -1,5 +1,5 @@
 """
-Views for the recipe APIs
+Defines API views to handle CRUD operations (Create, Read, Update, Delete).
 """
 from rest_framework import (
     viewsets,
@@ -16,7 +16,13 @@ from recipe import serializers
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """View for manage recipe APIs."""
+    """
+    View for manage recipe APIs.
+    Inherits from ModelViewSet, allowing full CRUD operations.
+    Uses TokenAuthentication, meaning users must be authenticated.
+    Only returns recipes that belong to the authenticated user (get_queryset method).
+
+    """
     serializer_class = serializers.RecipeDetailSerializer
     queryset = Recipe.objects.all()
     authentication_classes = [TokenAuthentication]
@@ -36,7 +42,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """Create a new recipe."""
         serializer.save(user=self.request.user)
 
-class TagViewset(mixins.ListModelMixin, viewsets.GenericViewSet):
+class TagViewset(mixins.UpdateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
     """Manage tags in the database."""
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()

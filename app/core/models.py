@@ -15,9 +15,9 @@ from django.contrib.auth.models import (
 # can be used to determine the path where we want to store our image files
 def recipe_image_file_path(instance, filename):
     """Generate file path for new recipe image."""
-    ext = os.path.splitext(filename)[1]
-    filename = f'{uuid.uuid4()}{ext}'
-    return os.path.join('uploads', 'recipe', filename)
+    ext = os.path.splitext(filename)[1] # Extracts the file extension (e.g., .jpg, .png)
+    filename = f'{uuid.uuid4()}{ext}' # Generates a unique filename using UUID
+    return os.path.join('uploads', 'recipe', filename) # Returns the full path, uploads/recipe/{random-uuid}.jpg
 
 class UserManager(BaseUserManager):
     """Manager for users"""

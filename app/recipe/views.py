@@ -1,6 +1,12 @@
 """
 Defines API views to handle CRUD operations (Create, Read, Update, Delete).
 """
+from drf_spectacular.utils import (
+    extend_schema_view,
+    extend_schema,
+    OpenApiParameter,
+    OpenApiTypes,
+)
 from rest_framework import (
     viewsets,
     mixins,
@@ -18,7 +24,22 @@ from core.models import (
 )
 from recipe import serializers
 
-
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                'tags',
+                OpenApiTypes.STR,
+                description='Comma seperated list of IDs to filter',
+            ),
+            OpenApiParameter(
+                'ingredients',
+                OpenApiTypes.STR,
+                description='Comma seperated list of ingredient IDs to filter',
+            )
+        ]
+    )
+)
 class RecipeViewSet(viewsets.ModelViewSet):
     """
     View for manage recipe APIs.
@@ -32,9 +53,27 @@ class RecipeViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    def _params_to_ints(self, qs):
+        """
+        Converts query string values (e.g., "1,2,3") into a list of integers ([1, 2, 3]).
+        This is necessary because URL query parameters are always strings.
+        """
+        return [int(str_id) for str_id in qs.split(',')]
+
     def get_queryset(self):
         """Retrieve recipes for authenticated user."""
-        return self.queryset.filter(user=self.request.user).order_by('-id')
+        #return self.queryset.filter(user=self.request.user).order_by('-id')
+        tags = self.request.query_params.get('tags') # Get tag IDs from query parameters
+        ingredients = self.request.query_params.get('ingredients') # Get ingredient IDs
+        queryset = self.queryset # Start with the base queryset
+        if tags:
+            tag_ids = self._params_to_ints(tags)
+            queryset = queryset.filter(tags__id__in=tag_ids)
+        if ingredients:
+            ingredient_ids = self._params_to_ints(ingredients)
+            queryset = queryset.filter(ingredients__id__in=ingredient_ids)
+        # Ensures that only recipes belonging to the logged-in user are returned. distinct() ensures no duplicate results.
+        return queryset.filter(user=self.request.user).order_by('-id').distinct
 
     def get_serializer_class(self):
         """Return the serializer class for request."""

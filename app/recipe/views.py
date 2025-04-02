@@ -33,8 +33,8 @@ from recipe import serializers
                 description='Comma seperated list of IDs to filter',
             ),
             OpenApiParameter(
-                'ingredients',
-                OpenApiTypes.STR,
+                'ingredients', # Parameter name in the URL (e.g., /api/recipes/?ingredients=4,5)
+                OpenApiTypes.STR, # Expected type (string)
                 description='Comma seperated list of ingredient IDs to filter',
             )
         ]
